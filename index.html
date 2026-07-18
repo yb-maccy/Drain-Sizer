@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storm/Sanitary Pipe Sizing Calculator</title>
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #3b82f6;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+            --highlight-bg: #fef08a;
+            --highlight-text: #854d0e;
+            --highlight-header: #fde047;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        /* Tabs Styling */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Form Grid Layout */
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-section {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Output Summary Display */
+        .output-section {
+            background: #e0f2fe;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #bae6fd;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .output-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0369a1;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #bae6fd;
+            padding-bottom: 5px;
+        }
+
+        .output-value {
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .output-value span {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0369a1;
+        }
+
+        /* Table Styling */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* Highlight classes */
+        .highlight-cell {
+            background-color: var(--highlight-bg) !important;
+            color: var(--highlight-text) !important;
+            font-weight: bold;
+            box-shadow: inset 0 0 0 2px var(--highlight-text);
+        }
+
+        .highlight-pipe {
+            background-color: var(--highlight-header) !important;
+            color: var(--primary-color) !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Storm/Sanitary Pipe Sizing Calculator</h1>
+
+    <!-- Tab Navigation Headers -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('storm')">Storm Drainage</button>
+        <button class="tab-btn" onclick="switchTab('sanitary')">Sanitary Drainage</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- STORM TAB -->
+    <!-- ========================================== -->
+    <div id="storm" class="tab-content active">
+        <div class="calculator-grid">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="storm-area">Drainage Area (sq ft):</label>
+                    <input type="number" id="storm-area" value="1000" min="1" oninput="calculateStorm()">
+                </div>
+                <div class="form-group">
+                    <label for="storm-rate">Rainfall Rate (inches/hour):</label>
+                    <input type="number" id="storm-rate" value="6" min="0" step="0.1" oninput="calculateStorm()">
+                </div>
+                <div class="form-group">
+                    <label for="storm-slope">Pipe Slope (inches per foot):</label>
+                    <select id="storm-slope" onchange="calculateStorm()">
+                        <option value="1/16">1/16"</option>
+                        <option value="1/8" selected>1/8"</option>
+                        <option value="1/4">1/4"</option>
+                        <option value="1/2">1/2"</option>
+                    </select>
+                </div>
+            </div>
+            <div class="output-section">
+                <div class="output-title">Storm Calculations Result</div>
+                <div class="output-value">Calculated Flow: <span id="storm-gpm-out">0</span> GPM</div>
+                <div class="output-value">Required Pipe Size: <span id="storm-size-out">—</span> inches</div>
+            </div>
+        </div>
+
+        <h3>Storm Capacity Reference Table (Horizontal Drains GPM)</h3>
+        <div class="table-container">
+            <table id="storm-table">
+                <thead>
+                    <tr>
+                        <th>Pipe Size (inches)</th>
+                        <th>1/16" Slope</th>
+                        <th>1/8" Slope</th>
+                        <th>1/4" Slope</th>
+                        <th>1/2" Slope</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated dynamically via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SANITARY TAB -->
+    <!-- ========================================== -->
+    <div id="sanitary" class="tab-content">
+        <div class="calculator-grid">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="san-dfu">Drainage Fixture Units (DFU):</label>
+                    <input type="number" id="san-dfu" value="50" min="0" oninput="calculateSanitary()">
+                </div>
+                <div class="form-group">
+                    <label for="san-slope">Pipe Slope (inches per foot):</label>
+                    <select id="san-slope" onchange="calculateSanitary()">
+                        <option value="1/16">1/16"</option>
+                        <option value="1/8" selected>1/8"</option>
+                        <option value="1/4">1/4"</option>
+                        <option value="1/2">1/2"</option>
+                    </select>
+                </div>
+            </div>
+            <div class="output-section">
+                <div class="output-title">Sanitary Calculations Result</div>
+                <div class="output-value">Required Pipe Size: <span id="san-size-out">—</span> inches</div>
+            </div>
+        </div>
+
+        <h3>Sanitary Reference Table (Maximum DFU)</h3>
+        <div class="table-container">
+            <table id="san-table">
+                <thead>
+                    <tr>
+                        <th>Diameter of Pipe (inches)</th>
+                        <th>1/16" Slope</th>
+                        <th>1/8" Slope</th>
+                        <th>1/4" Slope</th>
+                        <th>1/2" Slope</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated dynamically via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- DATA DECLARATIONS ---
+    const slopeColumns = ["1/16", "1/8", "1/4", "1/2"];
+
+    // Storm Data: [PipeSize, [Cap_1/16, Cap_1/8, Cap_1/4, Cap_1/2]]
+    const stormData = [
+        ["2", [15, 22, 31, 44]],
+        ["3", [39, 55, 79, 111]],
+        ["4", [81, 115, 163, 231]],
+        ["5", [117, 165, 234, 331]],
+        ["6", [243, 344, 487, 689]],
+        ["8", [505, 714, 1010, 1429]],
+        ["10", [927, 1311, 1855, 2623]],
+        ["12", [1480, 2093, 2960, 4187]],
+        ["14", [1312, 1856, 2621, 3713]],
+        ["15", [2508, 3546, 5016, 7093]],
+        ["16", [2508, 3546, 5016, 7093]],
+        ["18", [3100, 4386, 6192, 8773]]
+    ];
+
+    // Sanitary Data: [PipeSize, [Cap_1/16, Cap_1/8, Cap_1/4, Cap_1/2]]
+    // null or null value handles the '-' cases
+    const sanData = [
+        ["1 1/4", [null, null, 1, 1]],
+        ["1 1/2", [null, null, 3, 3]],
+        ["2", [null, null, 21, 26]],
+        ["2 1/2", [null, null, 24, 31]],
+        ["3", [null, 36, 42, 50]],
+        ["4", [null, 180, 216, 250]],
+        ["5", [null, 390, 480, 575]],
+        ["6", [null, 700, 840, 1000]],
+        ["8", [1400, 1600, 1920, 2300]],
+        ["10", [2500, 2900, 3500, 4200]],
+        ["12", [3900, 4600, 5600, 6700]],
+        ["15", [7000, 8300, 10000, 12000]]
+    ];
+
+    // --- INITIALIZE TABLES ---
+    function buildTables() {
+        const stormBody = document.querySelector("#storm-table tbody");
+        stormData.forEach((row, rowIndex) => {
+            let tr = document.createElement("tr");
+            tr.id = `storm-row-${rowIndex}`;
+            tr.innerHTML = `<td class="pipe-cell">${row[0]}</td>` + 
+                           row[1].map((val, colIndex) => `<td class="data-cell col-${colIndex}">${val.toLocaleString()}</td>`).join('');
+            stormBody.appendChild(tr);
+        });
+
+        const sanBody = document.querySelector("#san-table tbody");
+        sanData.forEach((row, rowIndex) => {
+            let tr = document.createElement("tr");
+            tr.id = `san-row-${rowIndex}`;
+            tr.innerHTML = `<td class="pipe-cell">${row[0]}</td>` + 
+                           row[1].map((val, colIndex) => `<td class="data-cell col-${colIndex}">${val !== null ? val.toLocaleString() : "—"}</td>`).join('');
+            sanBody.appendChild(tr);
+        });
+    }
+
+    // --- TAB SWITCHING ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        event.currentTarget.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // --- CALCULATIONS ---
+    function calculateStorm() {
+        const area = parseFloat(document.getElementById("storm-area").value) || 0;
+        const rate = parseFloat(document.getElementById("storm-rate").value) || 0;
+        const slope = document.getElementById("storm-slope").value;
+        const colIndex = slopeColumns.indexOf(slope);
+
+        // Conversion formula: Area * Rate * 0.0104
+        const gpm = parseFloat((area * rate * 0.0104).toFixed(2));
+        document.getElementById("storm-gpm-out").innerText = gpm.toLocaleString();
+
+        // Reset highlights
+        clearHighlights("storm-table");
+
+        let matchedIndex = -1;
+        let requiredSize = "Over Capacity";
+
+        // Search for smallest pipe size that satisfies constraints
+        for (let i = 0; i < stormData.length; i++) {
+            const capacity = stormData[i][1][colIndex];
+            if (gpm <= capacity) {
+                matchedIndex = i;
+                requiredSize = stormData[i][0];
+                break;
+            }
+        }
+
+        document.getElementById("storm-size-out").innerText = requiredSize;
+
+        // Apply visual highlights to targeted row and cell
+        if (matchedIndex !== -1) {
+            const rowEl = document.getElementById(`storm-row-${matchedIndex}`);
+            rowEl.querySelector('.pipe-cell').classList.add('highlight-pipe');
+            rowEl.querySelector(`.col-${colIndex}`).classList.add('highlight-cell');
+        }
+    }
+
+    function calculateSanitary() {
+        const dfu = parseInt(document.getElementById("san-dfu").value) || 0;
+        const slope = document.getElementById("san-slope").value;
+        const colIndex = slopeColumns.indexOf(slope);
+
+        clearHighlights("san-table");
+
+        let matchedIndex = -1;
+        let requiredSize = "Over Capacity";
+
+        for (let i = 0; i < sanData.length; i++) {
+            const capacity = sanData[i][1][colIndex];
+            if (capacity !== null && dfu <= capacity) {
+                matchedIndex = i;
+                requiredSize = sanData[i][0];
+                break;
+            }
+        }
+
+        document.getElementById("san-size-out").innerText = requiredSize;
+
+        if (matchedIndex !== -1) {
+            const rowEl = document.getElementById(`san-row-${matchedIndex}`);
+            rowEl.querySelector('.pipe-cell').classList.add('highlight-pipe');
+            rowEl.querySelector(`.col-${colIndex}`).classList.add('highlight-cell');
+        }
+    }
+
+    function clearHighlights(tableId) {
+        document.querySelectorAll(`#${tableId} .highlight-pipe`).forEach(el => el.classList.remove('highlight-pipe'));
+        document.querySelectorAll(`#${tableId} .highlight-cell`).forEach(el => el.classList.remove('highlight-cell'));
+    }
+
+    // --- APPLICATION START ---
+    buildTables();
+    calculateStorm();
+    calculateSanitary();
+</script>
+
+</body>
+</html>
